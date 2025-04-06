@@ -5,9 +5,17 @@ import express from "express";
 const app = express();
 const server = http.createServer(app);
 
+// Configure Socket.io for both development and production
+const allowedOrigins = [
+  "http://localhost:5173",  // Local development
+  "https://nexus-chat-frontend.onrender.com", // Render frontend
+  // Add your Vercel domain if using Vercel for frontend
+];
+
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173"],
+    origin: allowedOrigins,
+    credentials: true,
   },
 });
 
