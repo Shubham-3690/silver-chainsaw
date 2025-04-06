@@ -9,7 +9,8 @@ const server = http.createServer(app);
 const allowedOrigins = [
   "http://localhost:5173",  // Local development
   "https://nexus-chat-frontend.onrender.com", // Render frontend
-  // Add your Vercel domain if using Vercel for frontend
+  "https://nexus-chat.vercel.app", // Vercel frontend
+  // Add any additional domains here
 ];
 
 const io = new Server(server, {

@@ -6,7 +6,7 @@ import { io } from "socket.io-client";
 // Define backend URL based on environment
 const BASE_URL = import.meta.env.MODE === "development"
   ? "http://localhost:5001"
-  : "https://nexus-chat-backend.onrender.com";
+  : "https://nexus-chat-backend-419z.onrender.com";
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,
