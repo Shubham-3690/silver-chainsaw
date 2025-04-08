@@ -1,5 +1,5 @@
 {
-  "name": "backend",
+  "name": "carbonate-backend",
   "version": "1.0.0",
   "description": "",
   "main": "src/index.js",
@@ -9,7 +9,7 @@
     "start:with-frontend": "cross-env PORT=5173 node src/index.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Shubham",
   "type": "module",
   "license": "ISC",
   "dependencies": {

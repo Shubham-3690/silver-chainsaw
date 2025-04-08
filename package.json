@@ -1,7 +1,7 @@
 {
-  "name": "chat-app",
+  "name": "carbonate",
   "version": "1.0.0",
-  "description": "A real-time chat application with socket.io and React",
+  "description": "Carbonate - A chemistry-themed real-time chat application with socket.io and React",
   "main": "index.js",
   "scripts": {
     "install:concurrently": "npm install concurrently --save-dev",
@@ -19,7 +19,7 @@
     "socket.io",
     "webapp"
   ],
-  "author": "Elian",
+  "author": "Shubham",
   "license": "ISC",
   "devDependencies": {
     "concurrently": "^9.1.2",
