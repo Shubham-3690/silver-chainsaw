@@ -9,14 +9,14 @@
     "install": "npm run install:frontend && npm run install:backend", 
     "build:frontend": "npm run build --prefix frontend",
     "build:backend": "npm run build --prefix backend", 
-    "build": "npm run install && npm run build:frontend && npm run build:backend",  // Install dependencies and build both frontend and backend
+    "build": "npm run install && npm run build:frontend && npm run build:backend",
 
-    "start:frontend": "npm start --prefix frontend",  // Start the frontend separately
-    "start:backend": "npm run start:with-frontend --prefix backend", // Start backend with frontend
-    "start": "concurrently \"npm run start:frontend\" \"npm run start:backend\"",  // Start both frontend and backend concurrently
+    "start:frontend": "npm start --prefix frontend",
+    "start:backend": "npm run start:with-frontend --prefix backend",
+    "start": "concurrently \"npm run start:frontend\" \"npm run start:backend\"",
 
-    "dev": "concurrently \"npm run dev --prefix frontend\" \"npm run dev --prefix backend\"",  // Development mode for both frontend and backend
-    "test": "npm run test --prefix backend"  // Run backend tests
+    "dev": "concurrently \"npm run dev --prefix frontend\" \"npm run dev --prefix backend\"",
+    "test": "npm run test --prefix backend"
   },
   "keywords": [
     "chat",
@@ -25,13 +25,12 @@
     "socket.io",
     "webapp"
   ],
-  "author": "Elian",
+  "author": "Shubham",
   "license": "ISC",
   "devDependencies": {
     "concurrently": "^9.1.2",
     "cross-env": "^7.0.3"
   },
   "dependencies": {
-    // Add any general dependencies for the app here, if needed
   }
 }
