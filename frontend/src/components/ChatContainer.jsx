@@ -58,37 +58,50 @@ const ChatContainer = () => {
           messages.map((message, index) => (
             <div
               key={message._id}
-              className={`chat ${message.senderId === authUser._id ? "chat-end" : "chat-start"}`}
+              className={`flex ${message.senderId === authUser._id ? "justify-end" : "justify-start"} mb-4`}
               ref={index === messages.length - 1 ? messageEndRef : null}
             >
-              <div className="chat-image avatar">
-                <div className="size-10 rounded-full border border-base-300 shadow-sm">
+              {message.senderId !== authUser._id && (
+                <div className="mr-2 flex-shrink-0">
                   <img
-                    src={
-                      message.senderId === authUser._id
-                        ? authUser.profilePic || "/avatar.png"
-                        : selectedUser.profilePic || "/avatar.png"
-                    }
+                    src={selectedUser.profilePic || "/avatar.png"}
                     alt="profile pic"
-                    className="object-cover"
+                    className="size-8 rounded-full border border-base-300 shadow-sm object-cover"
                   />
                 </div>
+              )}
+              <div className="flex flex-col max-w-[75%]">
+                <div className="flex items-center mb-1">
+                  <span className="text-xs text-base-content/60">
+                    {formatMessageTime(message.createdAt)}
+                  </span>
+                </div>
+                <div
+                  className={`rounded-lg p-3 ${message.senderId === authUser._id
+                    ? "bg-primary/10 text-primary-content border border-primary/20"
+                    : "bg-base-200 border border-base-300/50"}
+                  ${message.image ? "p-2" : ""}`}
+                >
+                  {message.image && (
+                    <img
+                      src={message.image}
+                      alt="Attachment"
+                      className="max-w-full rounded-md mb-2 hover:opacity-95 transition-opacity cursor-pointer"
+                      onClick={() => window.open(message.image, "_blank")}
+                    />
+                  )}
+                  {message.text && <p className="break-words text-base-content">{message.text}</p>}
+                </div>
               </div>
-              <div className="chat-header mb-1">
-                <time className="text-xs opacity-50 ml-1">
-                  {formatMessageTime(message.createdAt)}
-                </time>
-              </div>
-              <div className={`chat-bubble flex flex-col ${message.senderId === authUser._id ? "bg-primary text-primary-content" : "bg-base-200"}`}>
-                {message.image && (
+              {message.senderId === authUser._id && (
+                <div className="ml-2 flex-shrink-0">
                   <img
-                    src={message.image}
-                    alt="Attachment"
-                    className="sm:max-w-[250px] rounded-md mb-2 shadow-sm"
+                    src={authUser.profilePic || "/avatar.png"}
+                    alt="profile pic"
+                    className="size-8 rounded-full border border-base-300 shadow-sm object-cover"
                   />
-                )}
-                {message.text && <p className="break-words">{message.text}</p>}
-              </div>
+                </div>
+              )}
             </div>
           ))
         )}

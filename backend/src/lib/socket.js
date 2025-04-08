@@ -5,17 +5,10 @@ import express from "express";
 const app = express();
 const server = http.createServer(app);
 
-// Configure Socket.io for both development and production
-const allowedOrigins = [
-  "http://localhost:5173",  // Local development
-  "https://nexus-chat-frontend.onrender.com", // Render frontend
-  "https://nexus-chat.vercel.app", // Vercel frontend
-  // Add any additional domains here
-];
-
+// Configure Socket.io to allow connections from any origin
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: true, // Allow any origin
     credentials: true,
   },
 });

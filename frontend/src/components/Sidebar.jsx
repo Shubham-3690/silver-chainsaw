@@ -21,13 +21,14 @@ const Sidebar = () => {
   if (isUsersLoading) return <SidebarSkeleton />;
 
   return (
-    <aside className="h-full w-20 lg:w-72 border-r border-base-300 flex flex-col transition-all duration-200 bg-base-100">
+    <aside className="h-full w-20 lg:w-72 border-r border-base-300 flex flex-col transition-all duration-200 bg-base-100 overflow-hidden">
       <div className="border-b border-base-300 w-full p-5">
         <div className="flex items-center gap-2">
           <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center">
             <Users className="size-5 text-primary" />
           </div>
           <span className="font-medium hidden lg:block">Contacts</span>
+          <span className="text-xs text-green-500 font-medium lg:hidden">{onlineUsers.length - 1}</span>
         </div>
 
         <div className="mt-4 hidden lg:flex items-center gap-2">
@@ -42,9 +43,19 @@ const Sidebar = () => {
           </label>
           <span className="text-xs text-base-content/60 ml-1">({onlineUsers.length - 1} online)</span>
         </div>
+
+        {/* Mobile view online toggle */}
+        <div className="mt-2 flex lg:hidden justify-center">
+          <button
+            onClick={() => setShowOnlineOnly(!showOnlineOnly)}
+            className={`btn btn-xs ${showOnlineOnly ? 'btn-primary' : 'btn-ghost'} w-full`}
+          >
+            {showOnlineOnly ? 'All Users' : 'Online Only'}
+          </button>
+        </div>
       </div>
 
-      <div className="overflow-y-auto w-full py-2">
+      <div className="overflow-y-auto overflow-x-hidden w-full py-2">
         {filteredUsers.length > 0 ? (
           filteredUsers.map((user) => (
             <button

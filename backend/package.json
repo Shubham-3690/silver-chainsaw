@@ -5,7 +5,8 @@
   "main": "src/index.js",
   "scripts": {
     "dev": "nodemon src/index.js",
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "start:with-frontend": "cross-env PORT=5173 node src/index.js"
   },
   "keywords": [],
   "author": "",
@@ -23,6 +24,7 @@
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "nodemon": "^3.1.7"
   }
 }

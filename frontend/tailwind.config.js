@@ -7,11 +7,16 @@ export default {
     extend: {
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'bounce-slow': 'bounce 3s infinite',
+        'spin-slow': 'spin 3s linear infinite',
       },
       transitionDuration: {
         '3000': '3000ms',
         '4000': '4000ms',
         '5000': '5000ms',
+      },
+      boxShadow: {
+        'message': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
       },
     },
   },

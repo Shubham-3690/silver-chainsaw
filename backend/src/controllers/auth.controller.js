@@ -14,7 +14,8 @@ export const signup = async (req, res) => {
       return res.status(400).json({ message: "Password must be at least 6 characters" });
     }
 
-    const user = await User.findOne({ email });
+    // Make email search case-insensitive for signup too
+    const user = await User.findOne({ email: { $regex: new RegExp('^' + email + '$', 'i') } });
 
     if (user) return res.status(400).json({ message: "Email already exists" });
 
@@ -55,7 +56,8 @@ export const signup = async (req, res) => {
 export const login = async (req, res) => {
   const { email, password } = req.body;
   try {
-    const user = await User.findOne({ email });
+    // Make email search case-insensitive
+    const user = await User.findOne({ email: { $regex: new RegExp('^' + email + '$', 'i') } });
 
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials" });

@@ -18,26 +18,11 @@ const __dirname = path.resolve();
 
 app.use(express.json());
 app.use(cookieParser());
-// Configure CORS for both development and production
-const allowedOrigins = [
-  "http://localhost:5173",  // Local development
-  "https://nexus-chat-frontend.onrender.com", // Render frontend
-  "https://nexus-chat.vercel.app", // Vercel frontend
-  // Add any additional domains here
-];
-
+// Configure CORS to allow requests from any origin in development
+// and only from the same origin in production
 app.use(
   cors({
-    origin: function(origin, callback) {
-      // Allow requests with no origin (like mobile apps, curl requests)
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.indexOf(origin) === -1) {
-        const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
-        return callback(new Error(msg), false);
-      }
-      return callback(null, true);
-    },
+    origin: true, // Allow any origin
     credentials: true,
   })
 );
@@ -45,13 +30,16 @@ app.use(
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../frontend/dist")));
+// Serve frontend in both production and when running from root with npm start
+app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
-  });
-}
+app.get("*", (req, res, next) => {
+  // Skip API routes
+  if (req.path.startsWith('/api') || req.path.startsWith('/socket.io')) {
+    return next();
+  }
+  res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
+});
 
 server.listen(PORT, () => {
   console.log("server is running on PORT:" + PORT);

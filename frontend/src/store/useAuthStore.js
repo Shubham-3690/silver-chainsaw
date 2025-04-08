@@ -3,10 +3,8 @@ import { axiosInstance } from "../lib/axios.js";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 
-// Define backend URL based on environment
-const BASE_URL = import.meta.env.MODE === "development"
-  ? "http://localhost:5001"
-  : "https://nexus-chat-backend-419z.onrender.com";
+// Use the same origin for socket.io in both development and production
+const BASE_URL = window.location.origin;
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,

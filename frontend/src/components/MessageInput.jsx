@@ -75,10 +75,11 @@ const MessageInput = () => {
         <div className="flex-1 flex gap-2">
           <input
             type="text"
-            className="w-full input input-bordered rounded-lg input-sm sm:input-md focus:border-primary"
+            className="w-full input input-bordered rounded-lg input-sm sm:input-md focus:input-primary transition-colors"
             placeholder="Type a message..."
             value={text}
             onChange={(e) => setText(e.target.value)}
+            autoComplete="off"
           />
           <input
             type="file"
@@ -90,8 +91,8 @@ const MessageInput = () => {
 
           <button
             type="button"
-            className={`hidden sm:flex btn btn-circle btn-sm sm:btn-md hover:bg-base-200 transition-colors
-                     ${imagePreview ? "text-primary border-primary" : "text-base-content/60"}`}
+            className={`hidden sm:flex btn btn-circle btn-sm sm:btn-md hover:bg-base-200 transition-all
+                     ${imagePreview ? "text-primary border-primary shadow-md" : "text-base-content/60"}`}
             onClick={() => fileInputRef.current?.click()}
             aria-label="Attach image"
           >
@@ -100,7 +101,7 @@ const MessageInput = () => {
         </div>
         <button
           type="submit"
-          className="btn btn-sm sm:btn-md btn-primary btn-circle"
+          className="btn btn-sm sm:btn-md btn-primary btn-circle shadow-md hover:shadow-lg transition-all"
           disabled={!text.trim() && !imagePreview}
           aria-label="Send message"
         >

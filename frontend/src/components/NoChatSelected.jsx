@@ -1,4 +1,4 @@
-import { MessageSquare } from "lucide-react";
+import { Beaker, Zap, Lock, Users } from "lucide-react";
 
 const NoChatSelected = () => {
   return (
@@ -8,24 +8,33 @@ const NoChatSelected = () => {
         <div className="flex justify-center gap-4 mb-4">
           <div className="relative">
             <div
-              className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center
-             justify-center animate-pulse shadow-md"
+              className="w-24 h-24 rounded-2xl bg-primary/10 flex items-center
+             justify-center animate-pulse-slow shadow-lg"
             >
-              <MessageSquare className="w-10 h-10 text-primary" />
+              <Beaker className="w-12 h-12 text-primary" />
             </div>
           </div>
         </div>
 
         {/* Welcome Text */}
         <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-          Welcome to Nexus!
+          Welcome to Carbonate!
         </h2>
         <p className="text-base-content/70 text-lg">
-          Select a conversation from the sidebar to start chatting
+          Select a conversation from the sidebar to start chatting with your friends
         </p>
-        <div className="pt-4">
-          <div className="badge badge-primary badge-outline p-3">Real-time messaging</div>
-          <div className="badge badge-secondary badge-outline p-3 ml-2">Secure & private</div>
+
+        {/* Feature badges */}
+        <div className="pt-6 flex flex-wrap justify-center gap-3">
+          <div className="badge badge-primary badge-outline p-3 gap-2 shadow-sm">
+            <Zap className="w-4 h-4" /> Real-time messaging
+          </div>
+          <div className="badge badge-secondary badge-outline p-3 gap-2 shadow-sm">
+            <Lock className="w-4 h-4" /> Secure & private
+          </div>
+          <div className="badge badge-accent badge-outline p-3 gap-2 shadow-sm">
+            <Users className="w-4 h-4" /> See who's online
+          </div>
         </div>
       </div>
     </div>
