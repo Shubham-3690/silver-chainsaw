@@ -18,11 +18,20 @@ const __dirname = path.resolve();
 
 app.use(express.json());
 app.use(cookieParser());
-// Configure CORS to allow requests from any origin
+// Configure CORS based on environment
+const isProduction = process.env.NODE_ENV === 'production';
+
+// In production, we need to be more permissive with CORS settings
 app.use(cors({
-  origin: true,
-  credentials: true
+  origin: true, // Allow any origin in both environments
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
 }));
+
+// Log environment for debugging
+console.log(`Running in ${process.env.NODE_ENV} mode with CORS configured`);
+
 
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);

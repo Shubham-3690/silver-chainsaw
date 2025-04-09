@@ -5,13 +5,20 @@ import express from "express";
 const app = express();
 const server = http.createServer(app);
 
-// Configure Socket.io to allow connections from any origin
+// Configure Socket.io with the same CORS settings as Express
+const isProduction = process.env.NODE_ENV === 'production';
+
 const io = new Server(server, {
   cors: {
-    origin: true, // Allow any origin
-    credentials: true
+    origin: true, // Allow any origin in both environments
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
   }
 });
+
+// Log socket.io configuration
+console.log(`Socket.io configured with CORS settings for ${process.env.NODE_ENV} environment`);
 
 export function getReceiverSocketId(userId) {
   return userSocketMap[userId];
