@@ -6,16 +6,12 @@ export const generateToken = (userId, res) => {
   });
 
   const cookieOptions = {
-    maxAge: 7 * 24 * 60 * 60 * 1000, // MS
-    httpOnly: true, // prevent XSS attacks cross-site scripting attacks
-    path: '/', // Ensure cookie is available across the entire site
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    httpOnly: true,
+    path: '/',
+    secure: true, // Always secure for cross-origin
+    sameSite: "None", // Always None for cross-origin cookies
   };
-
-  // Add secure and sameSite options only in production
-  if (process.env.NODE_ENV === "production") {
-    cookieOptions.secure = true;
-    cookieOptions.sameSite = "none";
-  }
 
   res.cookie("jwt", token, cookieOptions);
 
