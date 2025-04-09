@@ -1,13 +1,7 @@
 import jwt from "jsonwebtoken";
 
 export const generateToken = (userId, res) => {
-  // Ensure JWT_SECRET is available
-  if (!process.env.JWT_SECRET) {
-    console.error('JWT_SECRET is not defined in environment variables');
-    throw new Error('JWT_SECRET is not defined');
-  }
-
-  const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
+  const token = jwt.sign({ userId }, process.env.JWT_SECRET || 'fallback_secret_key', {
     expiresIn: "7d",
   });
 
@@ -22,11 +16,6 @@ export const generateToken = (userId, res) => {
     cookieOptions.secure = true;
     cookieOptions.sameSite = "none";
   }
-
-  console.log(`Setting JWT cookie with options:`, {
-    ...cookieOptions,
-    environment: process.env.NODE_ENV,
-  });
 
   res.cookie("jwt", token, cookieOptions);
 

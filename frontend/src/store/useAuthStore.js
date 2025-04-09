@@ -14,7 +14,6 @@ export const useAuthStore = create((set, get) => ({
   isCheckingAuth: true,
   onlineUsers: [],
   socket: null,
-  pingInterval: null,
 
   checkAuth: async () => {
     try {
@@ -88,59 +87,24 @@ export const useAuthStore = create((set, get) => ({
     const { authUser } = get();
     if (!authUser || get().socket?.connected) return;
 
-    console.log('Connecting to socket.io server at:', BASE_URL);
-
     const socket = io(BASE_URL, {
       query: {
         userId: authUser._id,
-      },
-      transports: ['websocket', 'polling'],
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-      timeout: 20000
-    });
-
-    // Setup event listeners before connecting
-    socket.on('connect', () => {
-      console.log('Socket connected successfully with ID:', socket.id);
-    });
-
-    socket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
-    });
-
-    socket.on('disconnect', (reason) => {
-      console.log('Socket disconnected:', reason);
+      }
     });
 
     socket.on("getOnlineUsers", (userIds) => {
-      console.log('Received online users:', userIds);
       set({ onlineUsers: userIds });
     });
 
-    // Keep-alive mechanism
-    const pingInterval = setInterval(() => {
-      if (socket.connected) {
-        socket.emit('ping', () => {
-          console.log('Ping successful');
-        });
-      }
-    }, 30000); // 30 seconds
-
-    // Now connect
     socket.connect();
 
-    set({
-      socket: socket,
-      pingInterval: pingInterval
-    });
+    set({ socket: socket });
   },
 
   disconnectSocket: () => {
-    const { socket, pingInterval } = get();
-    if (pingInterval) clearInterval(pingInterval);
+    const { socket } = get();
     if (socket?.connected) {
-      console.log('Disconnecting socket');
       socket.disconnect();
     }
   },
