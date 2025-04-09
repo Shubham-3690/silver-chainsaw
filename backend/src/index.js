@@ -24,16 +24,45 @@ app.use(
   cors({
     origin: true, // Allow any origin
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
+
+// Add OPTIONS handling for preflight requests
+app.options('*', cors());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 
 // Serve frontend in both production and when running from root with npm start
-const frontendPath = process.env.NODE_ENV === 'production'
-  ? path.join(__dirname, "../frontend/dist")
-  : path.join(__dirname, "../frontend/dist");
+let frontendPath;
+
+// Determine the correct path based on the environment
+if (process.env.NODE_ENV === 'production') {
+  // In production on Render, the dist folder is in a different location
+  frontendPath = path.join(__dirname, "../frontend/dist");
+
+  // Try alternative paths if the first one doesn't exist
+  if (!require('fs').existsSync(frontendPath)) {
+    frontendPath = path.join(__dirname, "/frontend/dist");
+
+    if (!require('fs').existsSync(frontendPath)) {
+      frontendPath = path.join(__dirname, "frontend/dist");
+
+      if (!require('fs').existsSync(frontendPath)) {
+        frontendPath = path.join(__dirname, "dist");
+      }
+    }
+  }
+} else {
+  // In development
+  frontendPath = path.join(__dirname, "../frontend/dist");
+}
+
+console.log("Frontend path:", frontendPath);
+console.log("Current directory:", __dirname);
+console.log("NODE_ENV:", process.env.NODE_ENV);
 
 app.use(express.static(frontendPath));
 

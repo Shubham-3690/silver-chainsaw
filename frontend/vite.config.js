@@ -4,6 +4,9 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   base: '/',
+  build: {
+    assetsInclude: ['**/*.svg', 'manifest.json', 'sw.js'],
+  },
   plugins: [react()],
   server: {
     port: 5173,

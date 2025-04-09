@@ -12,10 +12,8 @@ npm install --prefix frontend
 # Build frontend
 npm run build --prefix frontend
 
-# Copy .env.sample to backend/.env if .env doesn't exist
-if [ ! -f backend/.env ]; then
-  cp .env.sample backend/.env
-  echo "Created backend/.env from .env.sample"
-fi
+# Copy production environment file for deployment
+cp backend/.env.production backend/.env
+echo "Copied production environment file to backend/.env"
 
 echo "Build completed successfully!"
