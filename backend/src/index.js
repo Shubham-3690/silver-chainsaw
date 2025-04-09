@@ -31,14 +31,18 @@ app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 
 // Serve frontend in both production and when running from root with npm start
-app.use(express.static(path.join(__dirname, "../frontend/dist")));
+const frontendPath = process.env.NODE_ENV === 'production'
+  ? path.join(__dirname, "../frontend/dist")
+  : path.join(__dirname, "../frontend/dist");
+
+app.use(express.static(frontendPath));
 
 app.get("*", (req, res, next) => {
   // Skip API routes
   if (req.path.startsWith('/api') || req.path.startsWith('/socket.io')) {
     return next();
   }
-  res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
+  res.sendFile(path.join(frontendPath, "index.html"));
 });
 
 server.listen(PORT, () => {

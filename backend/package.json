@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
-    "start:with-frontend": "cross-env PORT=5173 node src/index.js"
+    "start:with-frontend": "node src/index.js",
+    "build": "echo \"No build step required for backend\""
   },
   "keywords": [],
   "author": "Shubham",
