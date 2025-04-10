@@ -6,12 +6,30 @@ import { io } from "socket.io-client";
 // Use the same origin for socket.io in both development and production
 const BASE_URL = window.location.origin;
 
-// Load token from localStorage if available
+// Enhanced token management
 const getStoredToken = () => {
   if (typeof window !== 'undefined') {
-    return localStorage.getItem('auth_token');
+    // Try to get token from localStorage
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      console.log('Token found in localStorage');
+      return token;
+    }
   }
   return null;
+};
+
+// Set token in localStorage and axios headers
+const setAuthToken = (token) => {
+  if (token) {
+    localStorage.setItem('auth_token', token);
+    axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    console.log('Token set in localStorage and Authorization header');
+  } else {
+    localStorage.removeItem('auth_token');
+    delete axiosInstance.defaults.headers.common['Authorization'];
+    console.log('Token removed from localStorage and Authorization header');
+  }
 };
 
 export const useAuthStore = create((set, get) => ({
@@ -26,15 +44,17 @@ export const useAuthStore = create((set, get) => ({
 
   checkAuth: async () => {
     try {
-      // Set token from localStorage if available
-      const token = localStorage.getItem('auth_token');
+      // Get token and set in headers if available
+      const token = getStoredToken();
       if (token) {
         axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       }
 
+      console.log('Checking authentication status...');
       const res = await axiosInstance.get("/auth/check");
       console.log('Auth check successful');
 
+      // Make sure token is set in state
       set({
         authUser: res.data,
         token: token
@@ -43,9 +63,11 @@ export const useAuthStore = create((set, get) => ({
       get().connectSocket();
     } catch (error) {
       console.error("Error in checkAuth:", error);
+      console.error("Status:", error.response?.status);
+      console.error("Message:", error.response?.data?.message || error.message);
+
       // Clear token on auth check failure
-      localStorage.removeItem('auth_token');
-      delete axiosInstance.defaults.headers.common['Authorization'];
+      setAuthToken(null);
 
       set({
         authUser: null,
@@ -59,13 +81,15 @@ export const useAuthStore = create((set, get) => ({
   signup: async (data) => {
     set({ isSigningUp: true });
     try {
+      console.log('Attempting signup...');
       const res = await axiosInstance.post("/auth/signup", data);
 
       // Store token in localStorage and state
       if (res.data.token) {
-        localStorage.setItem('auth_token', res.data.token);
-        // Set Authorization header for future requests
-        axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
+        setAuthToken(res.data.token);
+        console.log('Signup successful with token');
+      } else {
+        console.warn('Signup response missing token!');
       }
 
       set({
@@ -77,6 +101,8 @@ export const useAuthStore = create((set, get) => ({
       get().connectSocket();
     } catch (error) {
       console.error('Signup error:', error);
+      console.error('Status:', error.response?.status);
+      console.error('Message:', error.response?.data?.message || error.message);
       toast.error(error.response?.data?.message || 'Failed to create account');
     } finally {
       set({ isSigningUp: false });
@@ -86,13 +112,15 @@ export const useAuthStore = create((set, get) => ({
   login: async (data) => {
     set({ isLoggingIn: true });
     try {
+      console.log('Attempting login...');
       const res = await axiosInstance.post("/auth/login", data);
 
       // Store token in localStorage and state
       if (res.data.token) {
-        localStorage.setItem('auth_token', res.data.token);
-        // Set Authorization header for future requests
-        axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
+        setAuthToken(res.data.token);
+        console.log('Login successful with token');
+      } else {
+        console.warn('Login response missing token!');
       }
 
       set({
@@ -101,11 +129,11 @@ export const useAuthStore = create((set, get) => ({
       });
 
       toast.success("Logged in successfully");
-      console.log('Login successful, token:', res.data.token ? 'Present' : 'Missing');
-
       get().connectSocket();
     } catch (error) {
       console.error('Login error:', error);
+      console.error('Status:', error.response?.status);
+      console.error('Message:', error.response?.data?.message || error.message);
       toast.error(error.response?.data?.message || 'Failed to log in');
     } finally {
       set({ isLoggingIn: false });
@@ -114,11 +142,11 @@ export const useAuthStore = create((set, get) => ({
 
   logout: async () => {
     try {
+      console.log('Attempting logout...');
       await axiosInstance.post("/auth/logout");
 
       // Clear token from localStorage and state
-      localStorage.removeItem('auth_token');
-      delete axiosInstance.defaults.headers.common['Authorization'];
+      setAuthToken(null);
 
       set({
         authUser: null,
@@ -129,10 +157,12 @@ export const useAuthStore = create((set, get) => ({
       get().disconnectSocket();
     } catch (error) {
       console.error('Logout error:', error);
+      console.error('Status:', error.response?.status);
+      console.error('Message:', error.response?.data?.message || error.message);
       toast.error(error.response?.data?.message || 'Failed to log out');
 
       // Still clear token on error
-      localStorage.removeItem('auth_token');
+      setAuthToken(null);
       set({ authUser: null, token: null });
     }
   },

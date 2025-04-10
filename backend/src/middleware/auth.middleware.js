@@ -3,18 +3,32 @@ import User from "../models/user.model.js";
 
 export const protectRoute = async (req, res, next) => {
   try {
-    // Check for token in cookies or Authorization header
-    let token = req.cookies.jwt;
+    // Enhanced token extraction with detailed logging
+    let token = null;
 
-    // If no token in cookies, check Authorization header
+    // Check cookies first
+    if (req.cookies && req.cookies.jwt) {
+      token = req.cookies.jwt;
+      console.log('Auth middleware - Token found in cookies');
+    }
+
+    // Then check Authorization header
     if (!token && req.headers.authorization) {
       const authHeader = req.headers.authorization;
       if (authHeader.startsWith('Bearer ')) {
         token = authHeader.substring(7);
+        console.log('Auth middleware - Token found in Authorization header');
       }
     }
 
-    console.log('Auth middleware - Token found:', !!token);
+    // Log request details for debugging
+    console.log('Auth request details:', {
+      hasToken: !!token,
+      hasCookies: !!req.cookies,
+      hasAuthHeader: !!req.headers.authorization,
+      path: req.path,
+      method: req.method
+    });
 
     if (!token) {
       return res.status(401).json({ message: "Unauthorized - No Token Provided" });

@@ -21,13 +21,21 @@ app.use(cookieParser());
 // Configure CORS based on environment
 const isProduction = process.env.NODE_ENV === 'production';
 
-// In production, we need to be more permissive with CORS settings
+// Enhanced CORS configuration for better cross-domain cookie handling
 app.use(cors({
   origin: true, // Allow any origin in both environments
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With'],
+  exposedHeaders: ['Set-Cookie', 'Authorization']
 }));
+
+// Log CORS configuration
+console.log('CORS configured with credentials support:', {
+  isProduction,
+  origin: true,
+  credentials: true
+});
 
 // Log environment for debugging
 console.log(`Running in ${process.env.NODE_ENV} mode with CORS configured`);

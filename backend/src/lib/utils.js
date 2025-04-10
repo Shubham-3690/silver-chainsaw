@@ -8,13 +8,13 @@ export const generateToken = (userId, res) => {
   // Determine if we're in production
   const isProduction = process.env.NODE_ENV === 'production';
 
-  // Set cookie options - more permissive for production
+  // Set cookie options based on environment
   const cookieOptions = {
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     httpOnly: true,
     path: '/',
-    secure: false, // Set to false to work with HTTP
-    sameSite: 'Lax' // More permissive
+    secure: isProduction, // Use secure cookies in production
+    sameSite: isProduction ? 'None' : 'Lax' // Cross-site cookies in production
   };
 
   // Try to set the cookie
