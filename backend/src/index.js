@@ -53,44 +53,73 @@ app.use("/api/messages", messageRoutes);
 // Determine the correct frontend path based on the environment
 let frontendPath;
 
-// Check if we're on Render (production environment)
-if (process.env.RENDER) {
-  // Try multiple possible paths on Render
-  const possiblePaths = [
-    path.resolve(process.env.RENDER_PROJECT_DIR || '/opt/render/project/src', 'frontend/dist'),
-    path.resolve(process.env.RENDER_PROJECT_DIR || '/opt/render/project/src', 'dist'),
-    path.resolve('/opt/render/project/src', 'frontend/dist'),
-    path.resolve('/opt/render/project/src', 'dist')
-  ];
+// Import fs synchronously at the top level
+import fs from 'fs';
 
-  // Use the first path that exists and contains index.html
-  import('fs').then(fs => {
-    for (const p of possiblePaths) {
-      if (fs.existsSync(path.join(p, 'index.html'))) {
-        frontendPath = p;
-        console.log(`Found frontend files at: ${frontendPath}`);
-        break;
-      }
+// Simple function to check if a path exists and contains index.html
+function isValidFrontendPath(p) {
+  try {
+    return fs.existsSync(p) && fs.existsSync(path.join(p, 'index.html'));
+  } catch (err) {
+    console.error(`Error checking path ${p}:`, err.message);
+    return false;
+  }
+}
+
+// Get the project root directory
+const projectRoot = path.resolve(__dirname, '../..');
+console.log('Project root:', projectRoot);
+
+// Define possible frontend paths in order of preference
+const possiblePaths = [
+  // Standard locations
+  path.join(projectRoot, 'frontend/dist'),
+  path.join(projectRoot, 'dist'),
+
+  // Render-specific locations
+  '/opt/render/project/src/frontend/dist',
+  '/opt/render/project/src/dist',
+
+  // Fallback locations
+  path.resolve(__dirname, '../frontend/dist'),
+  path.resolve(__dirname, '../../frontend/dist')
+];
+
+// Log all possible paths for debugging
+console.log('Checking these paths for frontend files:');
+possiblePaths.forEach((p, i) => console.log(`${i+1}. ${p}`));
+
+// Find the first valid path
+for (const p of possiblePaths) {
+  if (isValidFrontendPath(p)) {
+    frontendPath = p;
+    console.log(`✅ Found valid frontend path: ${frontendPath}`);
+    break;
+  } else {
+    console.log(`❌ Invalid frontend path: ${p}`);
+  }
+}
+
+// If no valid path found, use the first one as fallback
+if (!frontendPath) {
+  frontendPath = possiblePaths[0];
+  console.log(`⚠️ No valid frontend path found, defaulting to: ${frontendPath}`);
+
+  // List directory contents for debugging
+  try {
+    console.log('Project root contents:');
+    console.log(fs.readdirSync(projectRoot));
+
+    console.log('Frontend directory contents (if exists):');
+    const frontendDir = path.join(projectRoot, 'frontend');
+    if (fs.existsSync(frontendDir)) {
+      console.log(fs.readdirSync(frontendDir));
+    } else {
+      console.log('Frontend directory not found');
     }
-
-    // If no valid path found, default to the first one
-    if (!frontendPath) {
-      frontendPath = possiblePaths[0];
-      console.log(`No valid frontend path found, defaulting to: ${frontendPath}`);
-    }
-  }).catch(err => {
-    console.error('Error checking frontend paths:', err);
-    frontendPath = possiblePaths[0];
-  });
-
-  // Set a default while the async check runs
-  frontendPath = path.resolve(process.env.RENDER_PROJECT_DIR || '/opt/render/project/src', 'dist');
-} else if (process.env.NODE_ENV === 'production') {
-  // In production but not on Render (e.g., other hosting)
-  frontendPath = path.resolve(__dirname, '../../frontend/dist');
-} else {
-  // In development
-  frontendPath = path.resolve(__dirname, '../frontend/dist');
+  } catch (err) {
+    console.error('Error listing directories:', err.message);
+  }
 }
 
 // Log paths for debugging
@@ -111,18 +140,46 @@ app.get("*", (req, res, next) => {
   // Check if index.html exists before sending it
   const indexPath = path.join(frontendPath, "index.html");
 
-  // Use fs to check if the file exists
-  import('fs').then(fs => {
-    if (fs.existsSync(indexPath)) {
-      res.sendFile(indexPath);
-    } else {
-      console.error(`Error: index.html not found at ${indexPath}`);
-      res.status(404).send(`Frontend files not found. Please make sure the frontend is built correctly.<br>\nLooking for: ${indexPath}`);
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    console.error(`Error: index.html not found at ${indexPath}`);
+
+    // Provide detailed error information
+    let errorMessage = `<h1>Frontend files not found</h1>
+      <p>The server could not find the frontend files at the expected location.</p>
+      <p>Looking for: ${indexPath}</p>
+      <h2>Debugging Information:</h2>
+      <p>Current directory: ${__dirname}</p>
+      <p>Frontend path: ${frontendPath}</p>
+      <p>NODE_ENV: ${process.env.NODE_ENV}</p>`;
+
+    // Try to list available directories
+    try {
+      errorMessage += `<h2>Available directories:</h2><pre>`;
+      const projectRoot = path.resolve(__dirname, '../..');
+      errorMessage += `Project root (${projectRoot}) contents:\n${fs.readdirSync(projectRoot).join('\n')}\n\n`;
+
+      const frontendDir = path.join(projectRoot, 'frontend');
+      if (fs.existsSync(frontendDir)) {
+        errorMessage += `Frontend directory contents:\n${fs.readdirSync(frontendDir).join('\n')}\n\n`;
+
+        const distDir = path.join(frontendDir, 'dist');
+        if (fs.existsSync(distDir)) {
+          errorMessage += `Frontend dist directory contents:\n${fs.readdirSync(distDir).join('\n')}`;
+        } else {
+          errorMessage += `Frontend dist directory not found`;
+        }
+      } else {
+        errorMessage += `Frontend directory not found`;
+      }
+      errorMessage += `</pre>`;
+    } catch (err) {
+      errorMessage += `<p>Error listing directories: ${err.message}</p>`;
     }
-  }).catch(err => {
-    console.error('Error checking for index.html:', err);
-    res.status(500).send('Server error checking for frontend files');
-  });
+
+    res.status(404).send(errorMessage);
+  }
 });
 
 server.listen(PORT, async () => {

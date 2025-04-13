@@ -25,12 +25,34 @@ npm run build --prefix frontend
 echo "Checking frontend build files:"
 ls -la frontend/dist
 
-# Create a backup copy of the frontend build in the root directory for Render
-echo "Creating backup of frontend build for Render..."
-mkdir -p dist
-cp -r frontend/dist/* dist/
-echo "Backup created in ./dist directory:"
-ls -la dist/
+# Create a backup copy of the frontend build in multiple locations for Render
+echo "Creating backup copies of frontend build for Render..."
+
+# Make sure the frontend/dist directory exists
+if [ -d "frontend/dist" ]; then
+  # Create root dist directory
+  mkdir -p dist
+  cp -r frontend/dist/* dist/
+  echo "Backup created in ./dist directory:"
+  ls -la dist/
+
+  # Create a copy in the backend directory too (some Render deployments look here)
+  mkdir -p backend/dist
+  cp -r frontend/dist/* backend/dist/
+  echo "Backup created in ./backend/dist directory:"
+  ls -la backend/dist/
+
+  # Create a copy in the project directory (another possible Render location)
+  mkdir -p project/dist
+  cp -r frontend/dist/* project/dist/
+  echo "Backup created in ./project/dist directory:"
+  ls -la project/dist/
+
+  echo "Frontend build files backed up to multiple locations"
+else
+  echo "ERROR: frontend/dist directory does not exist. Frontend build failed!"
+  exit 1
+fi
 
 # Create or copy environment file for deployment
 if [ -f backend/.env.production ]; then
