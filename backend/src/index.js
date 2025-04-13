@@ -50,11 +50,55 @@ app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 
 // Serve frontend in both production and when running from root with npm start
-const frontendPath = path.resolve(__dirname, "../frontend/dist");
+// Determine the correct frontend path based on the environment
+let frontendPath;
 
+// Check if we're on Render (production environment)
+if (process.env.RENDER) {
+  // Try multiple possible paths on Render
+  const possiblePaths = [
+    path.resolve(process.env.RENDER_PROJECT_DIR || '/opt/render/project/src', 'frontend/dist'),
+    path.resolve(process.env.RENDER_PROJECT_DIR || '/opt/render/project/src', 'dist'),
+    path.resolve('/opt/render/project/src', 'frontend/dist'),
+    path.resolve('/opt/render/project/src', 'dist')
+  ];
+
+  // Use the first path that exists and contains index.html
+  import('fs').then(fs => {
+    for (const p of possiblePaths) {
+      if (fs.existsSync(path.join(p, 'index.html'))) {
+        frontendPath = p;
+        console.log(`Found frontend files at: ${frontendPath}`);
+        break;
+      }
+    }
+
+    // If no valid path found, default to the first one
+    if (!frontendPath) {
+      frontendPath = possiblePaths[0];
+      console.log(`No valid frontend path found, defaulting to: ${frontendPath}`);
+    }
+  }).catch(err => {
+    console.error('Error checking frontend paths:', err);
+    frontendPath = possiblePaths[0];
+  });
+
+  // Set a default while the async check runs
+  frontendPath = path.resolve(process.env.RENDER_PROJECT_DIR || '/opt/render/project/src', 'dist');
+} else if (process.env.NODE_ENV === 'production') {
+  // In production but not on Render (e.g., other hosting)
+  frontendPath = path.resolve(__dirname, '../../frontend/dist');
+} else {
+  // In development
+  frontendPath = path.resolve(__dirname, '../frontend/dist');
+}
+
+// Log paths for debugging
 console.log("Frontend path:", frontendPath);
 console.log("Current directory:", __dirname);
 console.log("NODE_ENV:", process.env.NODE_ENV);
+console.log("RENDER:", process.env.RENDER || 'not set');
+console.log("RENDER_PROJECT_DIR:", process.env.RENDER_PROJECT_DIR || 'not set');
 
 app.use(express.static(frontendPath));
 
@@ -63,7 +107,22 @@ app.get("*", (req, res, next) => {
   if (req.path.startsWith('/api') || req.path.startsWith('/socket.io')) {
     return next();
   }
-  res.sendFile(path.join(frontendPath, "index.html"));
+
+  // Check if index.html exists before sending it
+  const indexPath = path.join(frontendPath, "index.html");
+
+  // Use fs to check if the file exists
+  import('fs').then(fs => {
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      console.error(`Error: index.html not found at ${indexPath}`);
+      res.status(404).send(`Frontend files not found. Please make sure the frontend is built correctly.<br>\nLooking for: ${indexPath}`);
+    }
+  }).catch(err => {
+    console.error('Error checking for index.html:', err);
+    res.status(500).send('Server error checking for frontend files');
+  });
 });
 
 server.listen(PORT, async () => {
