@@ -6,14 +6,8 @@ export const protectRoute = async (req, res, next) => {
     // Enhanced token extraction with detailed logging
     let token = null;
 
-    // Check cookies first
-    if (req.cookies && req.cookies.jwt) {
-      token = req.cookies.jwt;
-      console.log('Auth middleware - Token found in cookies');
-    }
-
-    // Then check Authorization header
-    if (!token && req.headers.authorization) {
+    // CHANGE: Check Authorization header FIRST (prioritize this over cookies)
+    if (req.headers.authorization) {
       const authHeader = req.headers.authorization;
       if (authHeader.startsWith('Bearer ')) {
         token = authHeader.substring(7);
@@ -21,13 +15,21 @@ export const protectRoute = async (req, res, next) => {
       }
     }
 
+    // Then check cookies as fallback
+    if (!token && req.cookies && req.cookies.jwt) {
+      token = req.cookies.jwt;
+      console.log('Auth middleware - Token found in cookies');
+    }
+
     // Log request details for debugging
     console.log('Auth request details:', {
       hasToken: !!token,
+      tokenSource: req.headers.authorization ? 'header' : (req.cookies?.jwt ? 'cookie' : 'none'),
       hasCookies: !!req.cookies,
       hasAuthHeader: !!req.headers.authorization,
       path: req.path,
-      method: req.method
+      method: req.method,
+      headers: Object.keys(req.headers)
     });
 
     if (!token) {
@@ -47,10 +49,23 @@ export const protectRoute = async (req, res, next) => {
   } catch (error) {
     console.log("Error in protectRoute middleware: ", error.message);
 
-    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
-      return res.status(401).json({ message: "Unauthorized - Invalid Token" });
+    // Handle specific JWT errors with appropriate messages
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: "Unauthorized - Invalid Token Format" });
+    } else if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: "Unauthorized - Token Expired" });
+    } else if (error.name === 'NotBeforeError') {
+      return res.status(401).json({ message: "Unauthorized - Token Not Active Yet" });
+    } else if (error.code === 'ERR_JWS_INVALID') {
+      return res.status(401).json({ message: "Unauthorized - Token Signature Invalid" });
     }
 
+    // For MongoDB/Mongoose errors
+    if (error.name === 'CastError') {
+      return res.status(400).json({ message: "Invalid user ID format" });
+    }
+
+    // Generic server error
     res.status(500).json({ message: "Internal server error" });
   }
 };

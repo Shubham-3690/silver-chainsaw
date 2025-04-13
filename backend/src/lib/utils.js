@@ -12,10 +12,19 @@ export const generateToken = (userId, res) => {
   const cookieOptions = {
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     httpOnly: true,
-    path: '/',
-    secure: isProduction, // Use secure cookies in production
-    sameSite: isProduction ? 'None' : 'Lax' // Cross-site cookies in production
+    path: '/'
   };
+
+  // In production, we need to set secure and sameSite for HTTPS
+  if (isProduction) {
+    // For production deployments (like Render)
+    cookieOptions.secure = true;
+    cookieOptions.sameSite = 'None';
+  } else {
+    // For local development
+    cookieOptions.secure = false;
+    cookieOptions.sameSite = 'Lax';
+  }
 
   // Try to set the cookie
   try {
@@ -28,8 +37,15 @@ export const generateToken = (userId, res) => {
     console.error('Error setting cookie:', error);
   }
 
-  // Also add token to response header for alternative auth method
+  // IMPORTANT: Add token to response header for alternative auth method
   res.setHeader('Authorization', `Bearer ${token}`);
+
+  // Also add token to Access-Control-Expose-Headers to make it available to the client
+  const exposedHeaders = res.getHeader('Access-Control-Expose-Headers') || '';
+  res.setHeader('Access-Control-Expose-Headers',
+    exposedHeaders ? `${exposedHeaders}, Authorization` : 'Authorization');
+
+  console.log('Token generated and set in Authorization header');
 
   return token;
 };

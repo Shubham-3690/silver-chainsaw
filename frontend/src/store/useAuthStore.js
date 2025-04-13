@@ -19,16 +19,24 @@ const getStoredToken = () => {
   return null;
 };
 
-// Set token in localStorage and axios headers
+// Set token in localStorage and axios headers with extra validation
 const setAuthToken = (token) => {
   if (token) {
-    localStorage.setItem('auth_token', token);
-    axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    console.log('Token set in localStorage and Authorization header');
+    // Ensure token is a string and has reasonable length
+    if (typeof token === 'string' && token.length > 20) {
+      localStorage.setItem('auth_token', token);
+      axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      console.log('Token set in localStorage and Authorization header:', token.substring(0, 15) + '...');
+      return true;
+    } else {
+      console.error('Invalid token format:', token);
+      return false;
+    }
   } else {
     localStorage.removeItem('auth_token');
     delete axiosInstance.defaults.headers.common['Authorization'];
     console.log('Token removed from localStorage and Authorization header');
+    return true;
   }
 };
 
@@ -81,15 +89,32 @@ export const useAuthStore = create((set, get) => ({
   signup: async (data) => {
     set({ isSigningUp: true });
     try {
-      console.log('Attempting signup...');
-      const res = await axiosInstance.post("/auth/signup", data);
+      console.log('Attempting signup with data:', { email: data.email, fullName: data.fullName, passwordLength: data.password?.length });
+
+      // Add timestamp to prevent caching
+      const res = await axiosInstance.post(`/auth/signup?_t=${Date.now()}`, data);
+      console.log('Signup response received:', { status: res.status, hasToken: !!res.data.token });
 
       // Store token in localStorage and state
       if (res.data.token) {
-        setAuthToken(res.data.token);
-        console.log('Signup successful with token');
+        const tokenSet = setAuthToken(res.data.token);
+        if (tokenSet) {
+          console.log('Signup successful with valid token');
+        } else {
+          console.error('Signup successful but token format invalid');
+        }
       } else {
-        console.warn('Signup response missing token!');
+        // Check headers for token as fallback
+        const authHeader = res.headers['authorization'];
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+          const headerToken = authHeader.substring(7);
+          setAuthToken(headerToken);
+          console.log('Token found in response headers instead of body');
+          // Update the token in the response data for state
+          res.data.token = headerToken;
+        } else {
+          console.warn('Signup response missing token in both body and headers!');
+        }
       }
 
       set({
@@ -112,15 +137,32 @@ export const useAuthStore = create((set, get) => ({
   login: async (data) => {
     set({ isLoggingIn: true });
     try {
-      console.log('Attempting login...');
-      const res = await axiosInstance.post("/auth/login", data);
+      console.log('Attempting login with credentials:', { email: data.email, passwordLength: data.password?.length });
+
+      // Add timestamp to prevent caching
+      const res = await axiosInstance.post(`/auth/login?_t=${Date.now()}`, data);
+      console.log('Login response received:', { status: res.status, hasToken: !!res.data.token });
 
       // Store token in localStorage and state
       if (res.data.token) {
-        setAuthToken(res.data.token);
-        console.log('Login successful with token');
+        const tokenSet = setAuthToken(res.data.token);
+        if (tokenSet) {
+          console.log('Login successful with valid token');
+        } else {
+          console.error('Login successful but token format invalid');
+        }
       } else {
-        console.warn('Login response missing token!');
+        // Check headers for token as fallback
+        const authHeader = res.headers['authorization'];
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+          const headerToken = authHeader.substring(7);
+          setAuthToken(headerToken);
+          console.log('Token found in response headers instead of body');
+          // Update the token in the response data for state
+          res.data.token = headerToken;
+        } else {
+          console.warn('Login response missing token in both body and headers!');
+        }
       }
 
       set({

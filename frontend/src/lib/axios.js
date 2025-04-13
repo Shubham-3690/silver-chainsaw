@@ -4,35 +4,42 @@ import toast from "react-hot-toast";
 // Define backend URL based on environment
 const BACKEND_URL = "/api"; // Use relative URL for both development and production
 
-// Create axios instance with enhanced configuration for cross-domain requests
+// Create axios instance with maximum compatibility for cross-domain requests
 export const axiosInstance = axios.create({
   baseURL: BACKEND_URL,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json'
+    'Accept': 'application/json',
+    'Cache-Control': 'no-cache',
+    'Pragma': 'no-cache'
   },
   // Increase timeout for slower connections
-  timeout: 10000
+  timeout: 15000
 });
 
-// Set auth token from localStorage if available
+// ALWAYS set auth token from localStorage if available
 const token = localStorage.getItem('auth_token');
 if (token) {
   axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-  console.log('Axios initialized with token from localStorage');
+  console.log('Axios initialized with token from localStorage:', token.substring(0, 15) + '...');
 } else {
-  console.log('Axios initialized without token');
+  console.log('Axios initialized without token - authentication will likely fail');
 }
 
-// Enhanced request interceptor for debugging and token handling
+// Enhanced request interceptor with aggressive token handling
 axiosInstance.interceptors.request.use(
   (config) => {
-    // Check for token on each request
+    // ALWAYS check for token on each request and force it into headers
     const token = localStorage.getItem('auth_token');
-    if (token && !config.headers.Authorization) {
+    if (token) {
+      // Force the Authorization header on EVERY request
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Add timestamp to prevent caching
+    const separator = config.url.includes('?') ? '&' : '?';
+    config.url = `${config.url}${separator}_t=${Date.now()}`;
 
     console.log(`Making ${config.method.toUpperCase()} request to: ${config.baseURL}${config.url}`);
     console.log('Request headers:', JSON.stringify(config.headers));
@@ -44,12 +51,20 @@ axiosInstance.interceptors.request.use(
   }
 );
 
-// Enhanced error handling with detailed logging and token management
+// Enhanced response handling with aggressive token capture
 axiosInstance.interceptors.response.use(
   (response) => {
     console.log(`Response from ${response.config.url}:`, response.status);
 
-    // Check for Authorization header in response
+    // Check for token in response data
+    if (response.data && response.data.token) {
+      const token = response.data.token;
+      console.log('Token found in response data');
+      localStorage.setItem('auth_token', token);
+      axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
+
+    // Also check for Authorization header in response
     const authHeader = response.headers['authorization'];
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
@@ -57,6 +72,9 @@ axiosInstance.interceptors.response.use(
       localStorage.setItem('auth_token', token);
       axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }
+
+    // Log all response headers for debugging
+    console.log('Response headers:', response.headers);
 
     return response;
   },
@@ -70,9 +88,8 @@ axiosInstance.interceptors.response.use(
 
     if (error.response?.status === 401) {
       toast.error('Authentication failed. Please try logging in again.');
-      // Clear token on auth failure
-      localStorage.removeItem('auth_token');
-      delete axiosInstance.defaults.headers.common['Authorization'];
+      // Don't clear token on first 401 - it might be a temporary issue
+      // Only clear if explicitly logging out or after multiple failures
     } else if (error.response?.data?.message) {
       toast.error(error.response.data.message);
     } else {

@@ -21,20 +21,25 @@ app.use(cookieParser());
 // Configure CORS based on environment
 const isProduction = process.env.NODE_ENV === 'production';
 
-// Enhanced CORS configuration for better cross-domain cookie handling
+// Extremely permissive CORS configuration for troubleshooting
 app.use(cors({
-  origin: true, // Allow any origin in both environments
+  origin: true, // Allow any origin
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With'],
-  exposedHeaders: ['Set-Cookie', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With', 'Accept'],
+  exposedHeaders: ['Set-Cookie', 'Authorization', 'Content-Type']
 }));
 
+// Add pre-flight response for all routes
+app.options('*', cors());
+
 // Log CORS configuration
-console.log('CORS configured with credentials support:', {
-  isProduction,
-  origin: true,
-  credentials: true
+console.log('CORS configured with maximum permissiveness for troubleshooting');
+
+// Add middleware to ensure Authorization header is exposed
+app.use((req, res, next) => {
+  res.header('Access-Control-Expose-Headers', 'Authorization');
+  next();
 });
 
 // Log environment for debugging
@@ -61,7 +66,14 @@ app.get("*", (req, res, next) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
 
-server.listen(PORT, () => {
-  console.log("server is running on PORT:" + PORT);
-  connectDB();
+server.listen(PORT, async () => {
+  console.log("Server is running on PORT:" + PORT);
+
+  // Connect to MongoDB
+  const dbConnected = await connectDB();
+
+  if (!dbConnected) {
+    console.log("Warning: Server is running without database connection.");
+    console.log("Some features may not work properly.");
+  }
 });

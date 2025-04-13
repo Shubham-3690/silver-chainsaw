@@ -20,12 +20,12 @@ const io = new Server(server, {
 // Log socket.io configuration
 console.log(`Socket.io configured with CORS settings for ${process.env.NODE_ENV} environment`);
 
+// used to store online users
+const userSocketMap = {}; // {userId: socketId}
+
 export function getReceiverSocketId(userId) {
   return userSocketMap[userId];
 }
-
-// used to store online users
-const userSocketMap = {}; // {userId: socketId}
 
 io.on("connection", (socket) => {
   console.log("A user connected", socket.id);
